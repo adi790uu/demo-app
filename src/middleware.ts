@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 import { decode_jwt } from "secureauthjwt";
 
 export async function middleware(req: NextRequest) {
-  console.log(req.headers.get("authorization"));
   const authHeader = req.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -12,19 +11,26 @@ export async function middleware(req: NextRequest) {
 
   const token = authHeader.split(" ")[1];
   console.log(token);
-  const secret = "123";
 
-  try {
-    const decoded = await decode_jwt(secret, token);
-    console.log(decoded);
-    req.headers.set("user", JSON.stringify(decoded));
-  } catch (error) {
-    console.log("here");
-    console.log(error);
+  const url = new URL(req.url);
+  const secret = url.searchParams.get("secret");
+
+  console.log(secret);
+
+  if (!secret) {
     return new NextResponse("unauthorized", { status: 401 });
   }
 
-  return NextResponse.next();
+  try {
+    const decoded = await decode_jwt(secret, token);
+    const res = NextResponse.next();
+    res.headers.set("user", JSON.stringify(decoded));
+
+    return res;
+  } catch (error) {
+    console.log(error);
+    return new NextResponse("unauthorized", { status: 401 });
+  }
 }
 
 export const config = {

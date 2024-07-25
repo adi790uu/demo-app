@@ -10,6 +10,5 @@ export async function POST(req: NextRequest) {
   const ttl = 3600;
 
   const token = await encode_jwt(secret, id, payload, ttl);
-  console.log(token);
   return NextResponse.json({ token });
 }
