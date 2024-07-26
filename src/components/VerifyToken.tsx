@@ -107,8 +107,7 @@ const VerifyToken = () => {
                     <p>
                       &nbsp;&nbsp;{key} :{" "}
                       <span className="font-medium">
-                        {typeof (response as ResponseType).user.payload[key] ===
-                        "boolean"
+                        {key === "aud"
                           ? JSON.stringify(
                               (response as ResponseType).user.payload[key]
                             )

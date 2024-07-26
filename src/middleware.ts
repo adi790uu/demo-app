@@ -23,6 +23,7 @@ export async function middleware(req: NextRequest) {
 
   try {
     const decoded = await decode_jwt(secret, token);
+    console.log(decoded);
     const res = NextResponse.next();
     res.headers.set("user", JSON.stringify(decoded));
 

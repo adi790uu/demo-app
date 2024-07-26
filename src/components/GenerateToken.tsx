@@ -3,15 +3,34 @@
 import React, { useState } from "react";
 import copy from "../../public/copy.svg";
 import Image from "next/image";
+import del from "../../public/del.svg";
 
 const GenerateToken = () => {
+  type Payload = {
+    name: string;
+    secret: string;
+    ttl: number;
+    aud: string[];
+    msg: string;
+  };
   const [jwt, setJwt] = useState("");
   const [error, setError] = useState(null);
-  const [payload, setPayload] = useState({
+  const [audience, setAudience] = useState("");
+  const [payload, setPayload] = useState<Payload>({
     name: "",
     secret: "",
-    admin: false,
+    ttl: 0,
+    aud: [],
+    msg: "",
   });
+
+  const handleAddAudience = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    e.preventDefault();
+    payload.aud.push(audience);
+    setAudience("");
+  };
 
   const handlePayloadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -21,7 +40,19 @@ const GenerateToken = () => {
     }));
   };
 
-  const handleJwtSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAudDelete = (index: number) => {
+    const updatedAud = [...payload.aud];
+    updatedAud.splice(index, 1);
+    //@ts-ignore
+    setPayload((prevPayload) => ({
+      ...prevPayload,
+      aud: updatedAud,
+    }));
+  };
+
+  const handleJwtSubmit = async (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
     e.preventDefault();
 
     try {
@@ -48,13 +79,13 @@ const GenerateToken = () => {
   return (
     <>
       <h1 className="text-2xl font-medium mb-6 text-center">Token Generator</h1>
-      <form onSubmit={handleJwtSubmit} className="space-y-6">
+      <div className="space-y-6">
         <div>
           <label
             htmlFor="name"
             className="block text-sm font-medium text-gray-700"
           >
-            Name
+            Name<span className="text-red-600 pl-1 pt-1">*</span>
           </label>
 
           <input
@@ -70,7 +101,7 @@ const GenerateToken = () => {
             htmlFor="secret"
             className="block text-sm font-medium text-gray-700 mt-2"
           >
-            Secret
+            Secret<span className="text-red-600 pl-1 pt-1">*</span>
           </label>
 
           <input
@@ -81,47 +112,114 @@ const GenerateToken = () => {
             onChange={handlePayloadChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-stone-500 focus:border-stone-500 sm:text-sm text-black"
           />
-        </div>
-        <div className="flex items-center">
+
+          <label
+            htmlFor="msg"
+            className="block text-sm font-medium text-gray-700 mt-2"
+          >
+            Message
+          </label>
+
           <input
-            type="checkbox"
-            id="admin"
-            name="admin"
-            checked={payload.admin}
+            type="text"
+            id="msg"
+            name="msg"
+            value={payload.msg}
             onChange={handlePayloadChange}
-            className="h-4 w-4 text-stone-600 border-gray-300 rounded focus:ring-stone-500"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-stone-500 focus:border-stone-500 sm:text-sm text-black"
           />
           <label
-            htmlFor="admin"
-            className="ml-2 block text-sm font-medium text-gray-700"
+            htmlFor="ttl"
+            className="block text-sm font-medium text-gray-700 mt-2"
           >
-            Admin
+            Time to Live<span className="text-gray-400"> (in sec)</span>
           </label>
+          <input
+            type="number"
+            id="ttl"
+            name="ttl"
+            value={payload.ttl}
+            onChange={handlePayloadChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-stone-500 focus:border-stone-500 sm:text-sm text-black"
+          />
+          <label
+            htmlFor="ttl"
+            className="block text-sm font-medium text-gray-700 mt-2"
+          >
+            Audience
+          </label>
+          <div className="flex items-center justify-center mt-1">
+            <input
+              type="text"
+              id="aud"
+              name="aud"
+              value={audience}
+              onChange={(e) => setAudience(e.target.value)}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-stone-500 focus:border-stone-500 sm:text-sm text-black"
+            />
+            <button
+              onClick={handleAddAudience}
+              className="py-2 px-3 bg-stone-600 rounded-md ml-1 text-sm text-white"
+            >
+              Add
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap justify-left">
+            {payload.aud.map((aud: string, index: number) => {
+              return (
+                <div className="flex bg-gray-200 ml-1 rounded-md p-2 mt-1">
+                  <span className="rounded-lg text-sm text-black text-center font-light">
+                    {aud}
+                  </span>
+                  <button
+                    className="ml-1 text-stone-800"
+                    onClick={() => handleAudDelete(index)}
+                  >
+                    <Image
+                      src={del}
+                      alt="remove"
+                      width={18}
+                      height={18}
+                    ></Image>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
+
         <div>
           <button
-            type="submit"
+            onClick={handleJwtSubmit}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-500"
           >
             Generate Token
           </button>
         </div>
-      </form>
+      </div>
       {jwt && (
         <div
-          className="mt-6 bg-green-100 border border-green-400 text-green-700 rounded overflow-auto"
+          className="mt-6 bg-green-100 border p-2 border-green-400 text-green-700 rounded-md w-full flex justify-between items-center"
           role="alert"
         >
-          <button className="">
+          <span className="mt-1 pl-1 pb-2 w-10/12 whitespace-nowrap overflow-x-scroll scroll-my-4 text-center">
+            {jwt}
+          </span>
+
+          <button
+            className=" bg-green-400 hover:opacity-45 rounded-md"
+            onClick={() => {
+              navigator.clipboard.writeText(jwt);
+            }}
+          >
             <Image
+              width={16}
+              height={16}
               src={copy}
               alt="copy"
-              className="rounded-br-md bg-[#FF6347]"
+              className="m-2"
             ></Image>
           </button>
-          <div className="mt-1 pl-1">
-            <span>{jwt}</span>
-          </div>
         </div>
       )}
       {error && (
