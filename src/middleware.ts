@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { decode_jwt } from "secureauthjwt";
+import { decode_jwt, validate_jwt } from "secureauthjwt";
 
 export async function middleware(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -22,10 +22,21 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
+    const isValid = await validate_jwt(secret, token);
+
+    if (!isValid) {
+      return new NextResponse("token expired", { status: 401 });
+    }
     const decoded = await decode_jwt(secret, token);
-    console.log(decoded);
     const res = NextResponse.next();
+
+    console.log(decoded);
+
     res.headers.set("user", JSON.stringify(decoded));
+
+    if (url.pathname === "/api/admin" && decoded.payload.role !== "admin") {
+      throw new Error("Not an admin!");
+    }
 
     return res;
   } catch (error) {
@@ -35,5 +46,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: "/api/secure/",
+  matcher: ["/api/secure/", "/api/admin/"],
 };

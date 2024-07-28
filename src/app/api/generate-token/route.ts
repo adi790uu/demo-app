@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { encode_jwt } from "secureauthjwt"; // Make sure this path is correct
 
 export async function POST(req: NextRequest) {
-  const { name, secret, ttl, aud, msg } = await req.json();
-  const payload = { name, msg };
+  const { name, secret, ttl, aud, msg, role } = await req.json();
+  const payload = { name, msg, role };
 
   const id = randomInt(1000000000, 9999999999).toString();
   const timeToLive: number = ttl ? Number(ttl) : 3600;
